@@ -666,7 +666,6 @@ function kernelExploit() {
 }
 
 function webkitExploit() {
-StartTimer();
 var PAGE_SIZE = 16384;
 var SIZEOF_CSS_FONT_FACE = 0xb8;
 var HASHMAP_BUCKET = 208;
@@ -1139,7 +1138,6 @@ window.ref_mem = function(p, sz)
         }
     };
     window.p = prim;
-    EndTimer();
     run_hax();
 }
 
