@@ -678,5 +678,5 @@ function run_hax() {
     load_exploit_done(); 
     }
 }
-
+window.p = prim;
 run_hax();
