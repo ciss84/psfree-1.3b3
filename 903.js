@@ -881,7 +881,7 @@ window.ffses = {};
 
     //hammer time!
 
-    pp_s = '';
+    var pp_s = '';
     pp_s += ptrToString(56);
     for (var i = 0; i < 12; i++)
         pp_s += ptrToString(guessed_addr + i * SIZEOF_CSS_FONT_FACE);
